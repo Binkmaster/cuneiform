@@ -54,6 +54,8 @@ Available techniques (by category):
     claude_sexagesimal_cfrac — Sexagesimal CF factoring (5-smooth quotient rounding)
     claude_regularity_sieve — Regularity-guided QS with smooth-part pre-filter
     claude_babylon_gcd    — Babylonian smooth-power GCD cascade (5-smooth exponents)
+    claude_polar          — Gaussian Pollard rho with Plimpton-322 starting points
+    claude_gaussian       — Gaussian integer factoring via Plimpton-322 + Cornacchia
 """
 
 from . import (
@@ -84,6 +86,8 @@ from . import (
     claude_sexagesimal_cfrac,
     claude_regularity_sieve,
     claude_babylon_gcd,
+    claude_polar,
+    claude_gaussian,
 )
 
 ALL_TECHNIQUES = [
@@ -114,6 +118,8 @@ ALL_TECHNIQUES = [
     claude_sexagesimal_cfrac,
     claude_regularity_sieve,
     claude_babylon_gcd,
+    claude_polar,
+    claude_gaussian,
 ]
 
 __all__ = [
@@ -144,5 +150,7 @@ __all__ = [
     "claude_sexagesimal_cfrac",
     "claude_regularity_sieve",
     "claude_babylon_gcd",
+    "claude_polar",
+    "claude_gaussian",
     "ALL_TECHNIQUES",
 ]

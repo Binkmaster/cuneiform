@@ -31,6 +31,7 @@ def _load_techniques():
         reciprocal_pairs, gcd_bombardment, random_congruences,
         claude_resonance, claude_fractal, claude_quantum,
         claude_sexagesimal_cfrac, claude_regularity_sieve, claude_babylon_gcd,
+        claude_polar, claude_gaussian,
     )
 
     techniques = [
@@ -77,6 +78,10 @@ def _load_techniques():
             (claude_regularity_sieve,   "Claude Reg-Sieve",    "Regularity-guided QS + partial relations"),
             (claude_babylon_gcd,        "Claude Babylon-GCD",  "5-smooth exponent cascade ({2,3,5} only)"),
         ]),
+        ("Novel (Claude × Gaussian/Polar)", [
+            (claude_gaussian,           "Claude Gaussian",     "Gaussian integers via Plimpton-322"),
+            (claude_polar,              "Claude Polar",        "Gaussian Pollard rho in ℤ[i]/(N)"),
+        ]),
     ]
 
     idx = 1
@@ -90,7 +95,7 @@ def print_banner():
     print("""
 ╔══════════════════════════════════════════════════════════════════════╗
 ║     𒀭  CUNEIFORM FACTOR — Interactive Semiprime Cracker  𒀭        ║
-║          27 techniques • gmpy2 accelerated • base-60 math          ║
+║          29 techniques • gmpy2 accelerated • base-60 math          ║
 ╚══════════════════════════════════════════════════════════════════════╝""")
     accel = "gmpy2/GMP" if HAS_GMPY2 else "stdlib (install gmpy2 for 5-50x speedup)"
     print(f"  Acceleration: {accel}\n")
