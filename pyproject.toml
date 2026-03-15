@@ -10,6 +10,7 @@ requires-python = ">=3.11"
 license = "MIT"
 
 [project.optional-dependencies]
+fast = ["gmpy2>=2.1"]
 dev = ["pytest>=7.0"]
 
 [tool.pytest.ini_options]

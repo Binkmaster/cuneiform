@@ -7,7 +7,9 @@ but looking for regularity patterns that characterize the problem space.
 from __future__ import annotations
 
 import random
-from math import gcd, isqrt, log
+from math import log
+
+from cuneiform.core.accel import gcd, isqrt
 
 from cuneiform.number_theory.primes import is_prime, optimal_smoothness_bound
 from cuneiform.number_theory.regularity import RegularityClass, classify_regularity

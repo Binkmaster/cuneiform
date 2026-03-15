@@ -7,7 +7,7 @@ Extended here into modular arithmetic for crypto-relevant analysis.
 from __future__ import annotations
 
 from fractions import Fraction
-from math import gcd
+from cuneiform.core.accel import gcd, invert
 
 from cuneiform.core.rational import SexaRational
 from .regularity import RegularityClass, classify_regularity
@@ -96,7 +96,7 @@ class ModularReciprocalPair:
         if gcd(x, modulus) != 1:
             self.x_inv = None
         else:
-            self.x_inv = pow(x, -1, modulus)
+            self.x_inv = invert(x, modulus)
         self._rc_x = None
         self._rc_inv = None
 

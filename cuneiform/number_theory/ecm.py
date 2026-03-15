@@ -6,9 +6,10 @@ mod n. CUNEIFORM's variant: select curves using Plimpton 322 triples.
 
 from __future__ import annotations
 
-from math import gcd, isqrt, log
+from math import log
 import random
 
+from cuneiform.core.accel import gcd, isqrt, invert
 from .primes import sieve_of_eratosthenes
 
 
@@ -36,7 +37,7 @@ def _ec_add(P: tuple, Q: tuple, a: int, n: int) -> tuple | None:
             return None  # Found factor!
         if g == n:
             return (0, 0)
-        inv = pow(denom, -1, n)
+        inv = invert(denom, n)
         lam = ((3 * x1 * x1 + a) * inv) % n
     else:
         denom = (x2 - x1) % n
@@ -45,7 +46,7 @@ def _ec_add(P: tuple, Q: tuple, a: int, n: int) -> tuple | None:
             return None  # Found factor!
         if g == n:
             return (0, 0)
-        inv = pow(denom, -1, n)
+        inv = invert(denom, n)
         lam = ((y2 - y1) * inv) % n
 
     x3 = (lam * lam - x1 - x2) % n
@@ -195,7 +196,7 @@ class PlimptonECM(ECM):
 
             # Curve parameter from triple structure
             # a = (y0^2 - x0^3) / x0 mod n (ensures point is on curve)
-            x0_inv = pow(x0, -1, self.n) if gcd(x0, self.n) == 1 else None
+            x0_inv = invert(x0, self.n) if gcd(x0, self.n) == 1 else None
             if x0_inv is None:
                 g = gcd(x0, self.n)
                 if 1 < g < self.n:

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from math import isqrt, log, exp, sqrt
+from math import log, exp, sqrt
+
+from cuneiform.core.accel import isqrt, powmod, is_probable_prime, HAS_GMPY2
 
 
 def sieve_of_eratosthenes(limit: int) -> list[int]:
@@ -19,7 +21,13 @@ def sieve_of_eratosthenes(limit: int) -> list[int]:
 
 
 def is_prime(n: int) -> bool:
-    """Miller-Rabin primality test, deterministic for n < 3.3e24."""
+    """Miller-Rabin primality test, deterministic for n < 3.3e24.
+
+    When gmpy2 is installed, delegates to GMP's mpz_probab_prime_p
+    for 10-100x faster primality testing on large integers.
+    """
+    if HAS_GMPY2:
+        return is_probable_prime(n)
     if n < 2:
         return False
     if n < 4:
@@ -37,11 +45,11 @@ def is_prime(n: int) -> bool:
     for a in witnesses:
         if a >= n:
             continue
-        x = pow(a, d, n)
+        x = powmod(a, d, n)
         if x == 1 or x == n - 1:
             continue
         for _ in range(r - 1):
-            x = pow(x, 2, n)
+            x = powmod(x, 2, n)
             if x == n - 1:
                 break
         else:
@@ -88,7 +96,7 @@ def legendre_symbol(a: int, p: int) -> int:
     a = a % p
     if a == 0:
         return 0
-    result = pow(a, (p - 1) // 2, p)
+    result = powmod(a, (p - 1) // 2, p)
     if result == p - 1:
         return -1
     return result
@@ -116,7 +124,7 @@ def tonelli_shanks(n: int, p: int) -> list[int]:
 
     if s == 1:
         # p ≡ 3 mod 4
-        r = pow(n, (p + 1) // 4, p)
+        r = powmod(n, (p + 1) // 4, p)
         return sorted({r, p - r})
 
     # Find a non-residue
@@ -125,9 +133,9 @@ def tonelli_shanks(n: int, p: int) -> list[int]:
         z += 1
 
     m = s
-    c = pow(z, q, p)
-    t = pow(n, q, p)
-    r = pow(n, (q + 1) // 2, p)
+    c = powmod(z, q, p)
+    t = powmod(n, q, p)
+    r = powmod(n, (q + 1) // 2, p)
 
     while True:
         if t == 1:
@@ -138,7 +146,7 @@ def tonelli_shanks(n: int, p: int) -> list[int]:
         while temp != 1:
             temp = (temp * temp) % p
             i += 1
-        b = pow(c, 1 << (m - i - 1), p)
+        b = powmod(c, 1 << (m - i - 1), p)
         m = i
         c = (b * b) % p
         t = (t * c) % p

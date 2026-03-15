@@ -16,6 +16,14 @@ source .venv/bin/activate
 pip install -e .
 ```
 
+For 10-100x faster big-integer arithmetic (recommended for factoring scripts):
+
+```bash
+pip install -e ".[fast]"
+```
+
+This installs [gmpy2](https://gmpy2.readthedocs.io/) which wraps the GMP library. The library works without it, but number theory operations on large integers will be significantly slower. The acceleration is automatic — no code changes needed.
+
 ## Quick start
 
 ```python

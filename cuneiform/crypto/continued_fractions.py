@@ -8,7 +8,7 @@ all positive rationals; the 5-smooth subtree has special structure.
 from __future__ import annotations
 
 from fractions import Fraction
-from math import gcd
+from cuneiform.core.accel import gcd
 
 from cuneiform.core.smooth import is_smooth, generate_smooth_numbers
 

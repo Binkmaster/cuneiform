@@ -6,9 +6,10 @@ for the sexagesimal hypothesis.
 
 from __future__ import annotations
 
-from math import isqrt, log, gcd
+from math import log
 import random
 
+from cuneiform.core.accel import gcd, isqrt, powmod
 from .primes import sieve_of_eratosthenes, legendre_symbol, tonelli_shanks
 from .factor_base import StandardFactorBase, SexagesimalFactorBase
 from .regularity import RegularityClass
@@ -193,7 +194,7 @@ class QuadraticSieve:
                 p = self.fb.primes[j]
                 if p == -1:
                     continue
-                y = (y * pow(p, e // 2, self.n)) % self.n
+                y = (y * powmod(p, e // 2, self.n)) % self.n
 
             x = x_product % self.n
             g = gcd(abs(x - y), self.n)
@@ -323,7 +324,7 @@ class SexagesimalQuadraticSieve:
                 p = primes[j]
                 if p == -1:
                     continue
-                y = (y * pow(p, e // 2, self.n)) % self.n
+                y = (y * powmod(p, e // 2, self.n)) % self.n
 
             x = x_product % self.n
             g = gcd(abs(x - y), self.n)

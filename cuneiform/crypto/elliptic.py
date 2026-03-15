@@ -8,7 +8,7 @@ regularity and group order smoothness.
 from __future__ import annotations
 
 import random
-from math import gcd, isqrt
+from cuneiform.core.accel import gcd, isqrt, invert
 
 from cuneiform.number_theory.primes import is_prime, sieve_of_eratosthenes
 from cuneiform.number_theory.regularity import RegularityClass
@@ -36,9 +36,9 @@ def _ec_add_fp(P: tuple, Q: tuple, a: int, p: int) -> tuple:
     if x1 == x2:
         if (y1 + y2) % p == 0:
             return (0, 0)
-        lam = ((3 * x1 * x1 + a) * pow(2 * y1, -1, p)) % p
+        lam = ((3 * x1 * x1 + a) * invert(2 * y1, p)) % p
     else:
-        lam = ((y2 - y1) * pow(x2 - x1, -1, p)) % p
+        lam = ((y2 - y1) * invert(x2 - x1, p)) % p
 
     x3 = (lam * lam - x1 - x2) % p
     y3 = (lam * (x1 - x3) - y1) % p
@@ -337,7 +337,7 @@ class ECDLPRegularityAttack:
                 da = (tortoise[1] - hare[1]) % self.order
                 db = (hare[2] - tortoise[2]) % self.order
                 if db != 0 and gcd(db, self.order) == 1:
-                    k = (da * pow(db, -1, self.order)) % self.order
+                    k = (da * invert(db, self.order)) % self.order
                     return {"steps": steps, "found": True, "k": k}
                 return {"steps": steps, "found": False, "reason": "bad collision"}
 
@@ -378,7 +378,7 @@ class ECDLPRegularityAttack:
                 da = (tortoise[1] - hare[1]) % self.order
                 db = (hare[2] - tortoise[2]) % self.order
                 if db != 0 and gcd(db, self.order) == 1:
-                    k = (da * pow(db, -1, self.order)) % self.order
+                    k = (da * invert(db, self.order)) % self.order
                     return {"steps": steps, "found": True, "k": k}
                 return {"steps": steps, "found": False, "reason": "bad collision"}
 

@@ -8,7 +8,8 @@ sexagesimal arithmetic -- the numbers whose reciprocals terminate in base 60.
 from __future__ import annotations
 
 import heapq
-from math import gcd
+
+from cuneiform.core.accel import gcd
 
 
 def is_smooth(n: int) -> bool:

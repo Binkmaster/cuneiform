@@ -8,7 +8,9 @@ admit better reduction (faster convergence, shorter vectors).
 from __future__ import annotations
 
 import random
-from math import gcd, isqrt, sqrt, log
+from math import sqrt, log
+
+from cuneiform.core.accel import gcd, isqrt, invert
 from fractions import Fraction
 
 from cuneiform.number_theory.regularity import RegularityClass
@@ -132,7 +134,7 @@ class SexagesimalLattice:
         for x in range(2, modulus):
             if gcd(x, modulus) != 1:
                 continue
-            x_inv = pow(x, -1, modulus)
+            x_inv = invert(x, modulus)
             if x_inv == x:
                 continue
             # Check regularity
@@ -148,7 +150,7 @@ class SexagesimalLattice:
         while len(pairs) < dim:
             x = rng.randint(2, modulus - 1)
             if gcd(x, modulus) == 1:
-                pairs.append((x, pow(x, -1, modulus)))
+                pairs.append((x, invert(x, modulus)))
 
         # Build basis vectors
         basis = []
