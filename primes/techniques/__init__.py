@@ -46,6 +46,11 @@ Available techniques (by category):
     reciprocal_pairs  — Babylonian reciprocal pair analysis
     gcd_bombardment   — Heuristic GCD with special sequences
     random_congruences — Random square-root witnesses
+
+  Novel (Claude originals):
+    claude_resonance  — Multi-discriminant Lucas cascade (class number heuristics)
+    claude_fractal    — Multi-walk ergodic collision factoring (IFS-inspired)
+    claude_quantum    — Classical period detection via FFT (Shor-inspired)
 """
 
 from . import (
@@ -70,6 +75,9 @@ from . import (
     reciprocal_pairs,
     gcd_bombardment,
     random_congruences,
+    claude_resonance,
+    claude_fractal,
+    claude_quantum,
 )
 
 ALL_TECHNIQUES = [
@@ -94,6 +102,9 @@ ALL_TECHNIQUES = [
     reciprocal_pairs,
     gcd_bombardment,
     random_congruences,
+    claude_resonance,
+    claude_fractal,
+    claude_quantum,
 ]
 
 __all__ = [
@@ -118,5 +129,8 @@ __all__ = [
     "reciprocal_pairs",
     "gcd_bombardment",
     "random_congruences",
+    "claude_resonance",
+    "claude_fractal",
+    "claude_quantum",
     "ALL_TECHNIQUES",
 ]
