@@ -14,6 +14,7 @@ import time
 import inspect
 import signal
 import logging
+import argparse
 
 logging.basicConfig(
     level=logging.INFO,
@@ -309,14 +310,24 @@ def run_all(n, *, per_technique_timeout: int = 120):
     return None
 
 
+def _parse_args():
+    parser = argparse.ArgumentParser(
+        description="Interactive semiprime factoring tool with 29 techniques.",
+    )
+    parser.add_argument("n", nargs="?", default=None,
+                        help="Semiprime to factor (optional, can also enter interactively)")
+    parser.add_argument("-t", "--timeout", type=int, default=120,
+                        help="Per-technique timeout in seconds (default: 120, 0 to disable)")
+    return parser.parse_args()
+
+
 def main():
+    args = _parse_args()
     _load_techniques()
     print_banner()
 
-    # If N provided on command line, use it
-    argv_n = None
-    if len(sys.argv) > 1 and sys.argv[1].isdigit():
-        argv_n = sys.argv[1]
+    argv_n = args.n
+    timeout = args.timeout or None
 
     while True:
         print_menu()
@@ -337,7 +348,7 @@ def main():
             # Run all
             n = get_semiprime(argv_n)
             argv_n = None  # only use CLI arg once
-            run_all(n)
+            run_all(n, per_technique_timeout=args.timeout)
             print()
             continue
 
@@ -370,7 +381,7 @@ def main():
         n = get_semiprime(argv_n)
         argv_n = None
 
-        run_technique(mod, title, n, params)
+        run_technique(mod, title, n, params, timeout=timeout)
         print()
 
 

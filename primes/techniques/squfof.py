@@ -42,6 +42,11 @@ def factor(
     if multipliers is None:
         multipliers = _DEFAULT_MULTIPLIERS
 
+    # SQUFOF is practical only for numbers up to ~60 digits (~200 bits).
+    # Beyond that the CF expansion is too slow; bail immediately.
+    if n.bit_length() > 200:
+        return None
+
     for k in multipliers:
         result = _squfof_one(n, k, max_iterations)
         if result is not None:
