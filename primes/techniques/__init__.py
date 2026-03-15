@@ -51,6 +51,9 @@ Available techniques (by category):
     claude_resonance  — Multi-discriminant Lucas cascade (class number heuristics)
     claude_fractal    — Multi-walk ergodic collision factoring (IFS-inspired)
     claude_quantum    — Classical period detection via FFT (Shor-inspired)
+    claude_sexagesimal_cfrac — Sexagesimal CF factoring (5-smooth quotient rounding)
+    claude_regularity_sieve — Regularity-guided QS with smooth-part pre-filter
+    claude_babylon_gcd    — Babylonian smooth-power GCD cascade (5-smooth exponents)
 """
 
 from . import (
@@ -78,6 +81,9 @@ from . import (
     claude_resonance,
     claude_fractal,
     claude_quantum,
+    claude_sexagesimal_cfrac,
+    claude_regularity_sieve,
+    claude_babylon_gcd,
 )
 
 ALL_TECHNIQUES = [
@@ -105,6 +111,9 @@ ALL_TECHNIQUES = [
     claude_resonance,
     claude_fractal,
     claude_quantum,
+    claude_sexagesimal_cfrac,
+    claude_regularity_sieve,
+    claude_babylon_gcd,
 ]
 
 __all__ = [
@@ -132,5 +141,8 @@ __all__ = [
     "claude_resonance",
     "claude_fractal",
     "claude_quantum",
+    "claude_sexagesimal_cfrac",
+    "claude_regularity_sieve",
+    "claude_babylon_gcd",
     "ALL_TECHNIQUES",
 ]

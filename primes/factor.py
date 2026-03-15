@@ -30,6 +30,7 @@ def _load_techniques():
         wiener, boneh_durfee, coppersmith, batch_gcd,
         reciprocal_pairs, gcd_bombardment, random_congruences,
         claude_resonance, claude_fractal, claude_quantum,
+        claude_sexagesimal_cfrac, claude_regularity_sieve, claude_babylon_gcd,
     )
 
     techniques = [
@@ -71,6 +72,11 @@ def _load_techniques():
             (claude_fractal,    "Claude Fractal",              "Multi-walk ergodic collisions"),
             (claude_quantum,    "Claude Quantum",              "Classical FFT period detection"),
         ]),
+        ("Novel (Claude × Cuneiform)", [
+            (claude_sexagesimal_cfrac,  "Claude Sexa-CFRAC",   "Sexagesimal CF with 5-smooth quotients"),
+            (claude_regularity_sieve,   "Claude Reg-Sieve",    "Regularity-guided QS + partial relations"),
+            (claude_babylon_gcd,        "Claude Babylon-GCD",  "5-smooth exponent cascade ({2,3,5} only)"),
+        ]),
     ]
 
     idx = 1
@@ -84,7 +90,7 @@ def print_banner():
     print("""
 ╔══════════════════════════════════════════════════════════════════════╗
 ║     𒀭  CUNEIFORM FACTOR — Interactive Semiprime Cracker  𒀭        ║
-║          24 techniques • gmpy2 accelerated • base-60 math          ║
+║          27 techniques • gmpy2 accelerated • base-60 math          ║
 ╚══════════════════════════════════════════════════════════════════════╝""")
     accel = "gmpy2/GMP" if HAS_GMPY2 else "stdlib (install gmpy2 for 5-50x speedup)"
     print(f"  Acceleration: {accel}\n")
