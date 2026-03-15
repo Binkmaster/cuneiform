@@ -61,13 +61,19 @@ def factor_hart(n: int, *, max_iterations: int = 1_000_000) -> tuple[int, int] |
 # Lehman's Method (1974)
 # ---------------------------------------------------------------------------
 
-def factor_lehman(n: int) -> tuple[int, int] | None:
+def factor_lehman(n: int, *, max_trial: int = 10_000_000,
+                   max_k: int = 10_000_000) -> tuple[int, int] | None:
     """Factor *n* using Lehman's deterministic O(n^(1/3)) method.
 
     Parameters
     ----------
     n : int
         The integer to factor (must be > 1).
+    max_trial : int
+        Cap on trial division (default 10 000 000).  The theoretical
+        bound is n^(1/3), but that is only practical for small n.
+    max_k : int
+        Cap on the lattice search parameter k (default 10 000 000).
 
     Returns
     -------
@@ -76,14 +82,16 @@ def factor_lehman(n: int) -> tuple[int, int] | None:
         or ``None`` if *n* is prime or 1.
     """
     cbrt_n = int(n ** (1 / 3)) + 1
+    trial_bound = min(cbrt_n + 1, max_trial)
 
-    # Trial division up to n^(1/3).
-    for p in range(2, cbrt_n + 1):
+    # Trial division up to min(n^(1/3), max_trial).
+    for p in range(2, trial_bound):
         if n % p == 0:
             return (p, n // p)
 
     # Lehman's lattice search.
-    for k in range(1, cbrt_n + 1):
+    k_bound = min(cbrt_n + 1, max_k)
+    for k in range(1, k_bound):
         sqrt_4kn = isqrt(4 * k * n)
         if sqrt_4kn * sqrt_4kn < 4 * k * n:
             sqrt_4kn += 1

@@ -12,6 +12,15 @@ Usage:
 import sys
 import time
 import inspect
+import signal
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="  %(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%H:%M:%S",
+)
+log = logging.getLogger("factor")
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent))
 
@@ -177,8 +186,22 @@ def get_semiprime(argv_n=None):
             print("    Invalid number, try again")
 
 
-def run_technique(mod, title, n, params):
-    """Run a single technique and report results."""
+class _Timeout(Exception):
+    """Raised when a technique exceeds its time limit."""
+
+
+def _timeout_handler(signum, frame):
+    raise _Timeout()
+
+
+def run_technique(mod, title, n, params, *, timeout=None):
+    """Run a single technique and report results.
+
+    Parameters
+    ----------
+    timeout : int | None
+        Maximum seconds to allow.  ``None`` means no limit.
+    """
     mod_name = mod.__name__.split('.')[-1]
     print(f"\n{'─'*70}")
     print(f"  Running: {title} ({mod_name})")
@@ -186,25 +209,48 @@ def run_technique(mod, title, n, params):
     print(f"           {n.bit_length()} bits, {len(str(n))} digits")
     if params:
         print(f"  Params:  {params}")
+    if timeout:
+        print(f"  Timeout: {timeout}s")
     print(f"{'─'*70}")
+
+    log.info("START  %s", mod_name)
+
+    # Set alarm-based timeout (Unix only)
+    old_handler = None
+    if timeout and hasattr(signal, 'SIGALRM'):
+        old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
+        signal.alarm(timeout)
 
     t = time.time()
     try:
         result = mod.factor(n, **params)
+    except _Timeout:
+        elapsed = time.time() - t
+        log.warning("TIMEOUT  %s after %.2fs (limit %ss)", mod_name, elapsed, timeout)
+        print(f"\n  Timed out after {elapsed:.2f}s (limit {timeout}s)")
+        return None
     except KeyboardInterrupt:
         elapsed = time.time() - t
+        log.info("INTERRUPTED  %s after %.2fs", mod_name, elapsed)
         print(f"\n  Interrupted after {elapsed:.2f}s")
         return None
     except Exception as e:
         elapsed = time.time() - t
+        log.error("ERROR  %s: %s: %s  [%.2fs]", mod_name, type(e).__name__, e, elapsed)
         print(f"\n  Error: {type(e).__name__}: {e}  [{elapsed:.2f}s]")
         return None
+    finally:
+        # Cancel any pending alarm
+        if old_handler is not None:
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, old_handler)
 
     elapsed = time.time() - t
 
     if result:
         p, q = sorted(result)
         valid = p * q == n
+        log.info("FACTORED  %s in %.2fs  p=%d q=%d valid=%s", mod_name, elapsed, p, q, valid)
         print(f"\n  FACTORED in {elapsed:.2f}s")
         print(f"    p = {p}")
         print(f"    q = {q}")
@@ -213,18 +259,27 @@ def run_technique(mod, title, n, params):
             print(f"    WARNING: product mismatch!")
         return result
     else:
+        log.info("NO_FACTOR  %s  [%.2fs]", mod_name, elapsed)
         print(f"\n  No factor found  [{elapsed:.2f}s]")
         return None
 
 
-def run_all(n):
-    """Run all techniques sequentially until one succeeds."""
+def run_all(n, *, per_technique_timeout: int = 120):
+    """Run all techniques sequentially until one succeeds.
+
+    Parameters
+    ----------
+    per_technique_timeout : int
+        Max seconds per technique (default 120).  Set to 0 to disable.
+    """
     print(f"\n{'═'*70}")
     print(f"  Running ALL techniques on N = {n}")
     print(f"  {n.bit_length()} bits, {len(str(n))} digits")
+    print(f"  Per-technique timeout: {per_technique_timeout}s")
     print(f"{'═'*70}")
 
     total_start = time.time()
+    timeout = per_technique_timeout or None
 
     for idx, mod, title, desc, category in TECHNIQUES:
         # Skip techniques that need extra required params
@@ -235,10 +290,11 @@ def run_all(n):
             if name not in ('n', 'kwargs')
         )
         if has_required:
+            log.info("SKIP  %s (requires additional parameters)", title)
             print(f"\n  Skipping {title} (requires additional parameters)")
             continue
 
-        result = run_technique(mod, title, n, {})
+        result = run_technique(mod, title, n, {}, timeout=timeout)
         if result:
             total = time.time() - total_start
             print(f"\n{'═'*70}")
