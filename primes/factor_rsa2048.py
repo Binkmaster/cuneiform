@@ -12,10 +12,12 @@ Let's find out.
 import sys
 import time
 import random
-from math import gcd, isqrt, log, log2
+from math import log, log2
 
 # Add parent to path
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent))
+
+from cuneiform.core.accel import gcd, isqrt, powmod, invert, HAS_GMPY2
 
 from cuneiform.core.smooth import extract_smooth_part, is_smooth, smooth_exponents
 from cuneiform.core.sexagesimal import Sexa
@@ -87,7 +89,7 @@ def phase0_recon(n):
     # Check if n is itself prime (it shouldn't be — it's a semiprime)
     # Skip full Miller-Rabin on 2048-bit number, just do quick Fermat test
     t = time.time()
-    fermat = pow(2, n - 1, n)
+    fermat = powmod(2, n - 1, n)
     print(f"  Fermat test (base 2): 2^(n-1) mod n = {'1 (probable prime or Carmichael)' if fermat == 1 else 'not 1 (composite ✓)'}  [{elapsed(t)}]")
 
     return None
@@ -182,7 +184,7 @@ def phase3_pollard_p1(n, B1=500_000, B2=5_000_000):
         pe = p
         while pe * p <= B1:
             pe *= p
-        a = pow(a, pe, n)
+        a = powmod(a, pe, n)
 
     g = gcd(a - 1, n)
     print(f"  Stage 1 gcd: {'TRIVIAL' if g == 1 or g == n else g}  [{elapsed(t)}]")
@@ -196,8 +198,8 @@ def phase3_pollard_p1(n, B1=500_000, B2=5_000_000):
     print(f"  Stage 2: checking primes in ({B1:,}, {B2:,})...")
     # Use baby-step giant-step style: precompute a^(2*delta) for small deltas
     stride = 2 * 3 * 5 * 7  # 210 (primorial)
-    a_stride = pow(a, stride, n)
-    a_current = pow(a, B1 - (B1 % stride), n)
+    a_stride = powmod(a, stride, n)
+    a_current = powmod(a, B1 - (B1 % stride), n)
 
     # Quick stage 2 — check a few thousand primes
     count = 0
@@ -207,7 +209,7 @@ def phase3_pollard_p1(n, B1=500_000, B2=5_000_000):
             if 1 < g2 < n:
                 print(f"  !! Stage 2 FACTOR at p~{p}: {g2}")
                 return g2
-        a_current = pow(a_current, p, n)
+        a_current = powmod(a_current, p, n)
         count += 1
 
     g2 = gcd(a_current - 1, n)
@@ -373,7 +375,7 @@ def phase6_continued_fractions(n):
     demo_n = demo_p * demo_q
     demo_phi = (demo_p - 1) * (demo_q - 1)
     demo_d = 65537  # small d
-    demo_e = pow(demo_d, -1, demo_phi)
+    demo_e = invert(demo_d, demo_phi)
     demo_terms = cf_expansion(demo_e, demo_n, max_terms=200)
     demo_convs = cf_convergents(demo_terms)
     demo_found = False
@@ -464,7 +466,7 @@ def phase8_reciprocal_pairs(n):
     # For each, compute modular inverse and check for interesting properties
     interesting = []
     for x in regular_numbers[:200]:
-        x_inv = pow(x, -1, n)
+        x_inv = invert(x, n)
         s = (x + x_inv) % n
         d = (x - x_inv) % n
 
@@ -656,7 +658,7 @@ def phase13_gcd_bombardment(n):
 
     # Powers of 60
     for k in range(1, 200):
-        val = pow(60, k, n) - 1
+        val = powmod(60, k, n) - 1
         g = gcd(val, n)
         if 1 < g < n:
             tests.append((f"60^{k} - 1", g))
@@ -698,7 +700,7 @@ def phase14_random_congruences(n, attempts=100_000):
     for i in range(attempts):
         a = rng.randint(2, n - 2)
         # Compute a^((n-1)/2) mod n
-        val = pow(a, (n - 1) // 2, n)
+        val = powmod(a, (n - 1) // 2, n)
         if val != 1 and val != n - 1:
             g = gcd(val - 1, n)
             if 1 < g < n:

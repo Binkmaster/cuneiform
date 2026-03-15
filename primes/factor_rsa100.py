@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Attempt to factor RSA-2048 using every tool in the cuneiform arsenal.
+"""Attempt to factor RSA-100 using every tool in the cuneiform arsenal.
 
-This is the RSA-2048 challenge number from RSA Laboratories (2048 bits, ~617 digits).
-No one has ever factored it. We throw ancient Babylonian mathematics at it anyway.
+This is the RSA-100 challenge number from RSA Laboratories (330 bits, 100 digits).
+It was first factored in 1991 by Lenstra et al. using the quadratic sieve.
+We throw ancient Babylonian mathematics at it to see if cuneiform tools can crack it.
 
 The cuneiform hypothesis: base-60 representation privileges 5-smooth numbers,
 and organizing algorithms around this property may expose hidden structure.
@@ -33,13 +34,13 @@ from cuneiform.crypto.continued_fractions import (
 # THE TARGET
 # ═══════════════════════════════════════════════════════════════════════
 
-RSA_2048 = int(
-    "22112825529529666435281085255026230927612089502470015394413748319128822941402001986512729726569746599085900330031400051170742204560859276357953757185954298838958709229238491006703034124620545784566413664540684214361293017694020846391065875914794251435144458199"
+RSA_100 = int(
+    "1522605027922533360535618378132637429718068114961380688657908494580122963258952897654000350692006139"
 )
 
 BANNER = """
 ╔══════════════════════════════════════════════════════════════════════╗
-║        𒀭  CUNEIFORM vs RSA-2048: Breaking Modern Crypto           ║
+║        𒀭  CUNEIFORM vs RSA-100: Breaking Modern Crypto            ║
 ║              with 3,700-Year-Old Mathematics  𒀭                    ║
 ╚══════════════════════════════════════════════════════════════════════╝
 """
@@ -61,7 +62,7 @@ def elapsed(start):
 
 def phase0_recon(n):
     section("PHASE 0: Reconnaissance")
-    print(f"  Target: RSA-2048 challenge number")
+    print(f"  Target: RSA-100 challenge number")
     print(f"  Digits: {len(str(n))}")
     print(f"  Bits:   {n.bit_length()}")
     print(f"  n mod 2:  {n % 2}  (odd ✓)")
@@ -79,7 +80,6 @@ def phase0_recon(n):
     print(f"  isqrt(n) ≈ {str(s)[:40]}... ({s.bit_length()} bits)")
 
     # Check if n is itself prime (it shouldn't be — it's a semiprime)
-    # Skip full Miller-Rabin on 2048-bit number, just do quick Fermat test
     t = time.time()
     fermat = powmod(2, n - 1, n)
     print(f"  Fermat test (base 2): 2^(n-1) mod n = {'1 (probable prime or Carmichael)' if fermat == 1 else 'not 1 (composite ✓)'}  [{elapsed(t)}]")
@@ -153,7 +153,7 @@ def phase2_trial_division(n, limit=1_000_000):
             print(f"  !! FACTOR FOUND: {p}")
             return p
     print(f"  No small factors found  [{elapsed(t)}]")
-    print(f"  (RSA primes are ~1024 bits each — trial division needs ~2^512 operations)")
+    print(f"  (RSA-100 primes are ~165 bits each — trial division needs ~2^165 operations)")
     return None
 
 
@@ -188,23 +188,38 @@ def phase3_pollard_p1(n, B1=500_000, B2=5_000_000):
     # Stage 2: check individual primes between B1 and B2
     t2 = time.time()
     print(f"  Stage 2: checking primes in ({B1:,}, {B2:,})...")
-    # Use baby-step giant-step style: precompute a^(2*delta) for small deltas
-    stride = 2 * 3 * 5 * 7  # 210 (primorial)
-    a_stride = powmod(a, stride, n)
-    a_current = powmod(a, B1 - (B1 % stride), n)
+    stage2_primes = sieve_of_eratosthenes(min(B2, B1 + 2_000_000))
 
-    # Quick stage 2 — check a few thousand primes
+    # Accumulate product for batched GCD
+    product = 1
+    batch_size = 500
     count = 0
-    for p in range(B1 + 1, min(B2, B1 + 500_000), 2):
-        if count % 10000 == 0 and count > 0:
-            g2 = gcd(a_current - 1, n)
-            if 1 < g2 < n:
-                print(f"  !! Stage 2 FACTOR at p~{p}: {g2}")
-                return g2
-        a_current = powmod(a_current, p, n)
+    for p in stage2_primes:
+        if p <= B1:
+            continue
+        # a is already 2^(smooth product) mod n from stage 1
+        ap = powmod(a, p, n)
+        product = (product * (ap - 1)) % n
         count += 1
+        if count % batch_size == 0:
+            g2 = gcd(product, n)
+            if 1 < g2 < n:
+                print(f"  !! Stage 2 FACTOR at prime ~{p}: {g2}")
+                return g2
+            if g2 == n:
+                # Backtrack: check primes individually in this batch
+                for p2 in stage2_primes:
+                    if p2 <= p - batch_size or p2 > p:
+                        continue
+                    if p2 <= B1:
+                        continue
+                    g3 = gcd(powmod(a, p2, n) - 1, n)
+                    if 1 < g3 < n:
+                        print(f"  !! Stage 2 FACTOR at prime {p2}: {g3}")
+                        return g3
+            product = 1
 
-    g2 = gcd(a_current - 1, n)
+    g2 = gcd(product, n)
     print(f"  Stage 2 gcd: {'TRIVIAL' if g2 == 1 or g2 == n else g2}  [{elapsed(t2)}]")
 
     if 1 < g2 < n:
@@ -221,9 +236,9 @@ def phase3_pollard_p1(n, B1=500_000, B2=5_000_000):
 
 def phase4_pollard_rho(n, iterations=5_000_000):
     section(f"PHASE 4: Pollard's rho ({iterations:,} iterations)")
-    print(f"  Expected: O(p^(1/4)) iterations for smallest prime p")
-    print(f"  For RSA-2048: p ~ 2^1024, so we need ~ 2^256 iterations")
-    print(f"  We'll try {iterations:,} just to be thorough...")
+    print(f"  Expected: O(p^(1/2)) iterations for smallest prime p")
+    print(f"  For RSA-100: p ~ 2^165, so we need ~ 2^83 iterations")
+    print(f"  We'll try {iterations:,} — long shot but worth it...")
 
     t = time.time()
     x = 2
@@ -235,30 +250,45 @@ def phase4_pollard_rho(n, iterations=5_000_000):
     product = 1
     batch = 1000
 
+    # Save state at batch boundaries for correct backtracking
+    x_save, y_save = x, y
+
     for i in range(1, iterations + 1):
+        if i % batch == 1:
+            x_save, y_save = x, y
+
         x = (x * x + c) % n
         y = (y * y + c) % n
         y = (y * y + c) % n
 
-        product = (product * abs(x - y)) % n
+        diff = x - y if x > y else y - x
+        if diff == 0:
+            # Cycle with trivial collision — try different c
+            c += 1
+            x = y = 2
+            x_save = y_save = 2
+            product = 1
+            continue
+
+        product = (product * diff) % n
 
         if i % batch == 0:
             d = gcd(product, n)
             if d == n:
-                # Backtrack with single steps
-                x2 = 2
-                y2 = 2
-                for j in range(max(0, i - batch), i):
+                # Backtrack: replay this batch with individual GCDs
+                x2, y2 = x_save, y_save
+                for j in range(batch):
                     x2 = (x2 * x2 + c) % n
                     y2 = (y2 * y2 + c) % n
                     y2 = (y2 * y2 + c) % n
                     d2 = gcd(abs(x2 - y2), n)
                     if 1 < d2 < n:
-                        print(f"  !! FACTOR at iteration {j}: {d2}")
+                        print(f"  !! FACTOR at iteration {i - batch + j + 1}: {d2}")
                         return d2
-                # Try different c
+                # Batch was all trivial — try different c
                 c += 1
                 x = y = 2
+                x_save = y_save = 2
                 product = 1
                 continue
             if 1 < d < n:
@@ -279,7 +309,7 @@ def phase4_pollard_rho(n, iterations=5_000_000):
 
 def phase5_ecm(n, curves=50, B1=50_000):
     section(f"PHASE 5: Elliptic Curve Method ({curves} curves, B1={B1:,})")
-    print(f"  ECM excels at finding small factors — but RSA-2048 has none.")
+    print(f"  ECM excels at finding medium-sized factors — RSA-100 has ~50-digit factors.")
     print(f"  We try both standard random curves and Plimpton-322-derived curves.")
 
     from cuneiform.number_theory.ecm import ECM, PlimptonECM
@@ -568,37 +598,66 @@ def phase10_williams_pp1(n, B=500_000):
 # PHASE 11: Sexagesimal Quadratic Sieve (Toy Demo)
 # ═══════════════════════════════════════════════════════════════════════
 
-def phase11_sexa_qs_demo():
-    section("PHASE 11: Sexagesimal QS — Demonstration on Smaller Target")
-    print(f"  The QS cannot touch RSA-2048 (needs ~2^110 operations).")
-    print(f"  Demonstrating on a 60-bit semiprime to show the algorithm works.")
+def phase11_sexa_qs(n):
+    section("PHASE 11: Sexagesimal QS — Applied to RSA-100")
+    print(f"  RSA-100 was originally factored by the quadratic sieve in 1991.")
+    print(f"  Trying both standard and sexagesimal QS on the actual target.")
+    print(f"  Note: pure Python QS is slow — using manually tuned bounds.")
 
     from cuneiform.number_theory.sieve import QuadraticSieve, SexagesimalQuadraticSieve
 
-    # Generate a ~60 bit semiprime
-    p = 1073741827  # ~30 bit prime
-    q = 1073741831
-    demo_n = p * q
-    print(f"\n  Demo target: {demo_n} ({demo_n.bit_length()} bits)")
-    print(f"  Known factors: {p} × {q}")
+    # First, verify the algorithm works on a warmup target
+    print(f"\n  11a. Warmup: 60-bit semiprime")
+    wp = 1073741827  # ~30 bit prime
+    wq = 1073741831
+    demo_n = wp * wq
+    print(f"  Demo target: {demo_n} ({demo_n.bit_length()} bits)")
+
+    t = time.time()
+    sqs_demo = SexagesimalQuadraticSieve(demo_n, bound=500, sieve_range=50000)
+    result_demo = sqs_demo.factor()
+    print(f"  Sexagesimal QS result: {result_demo}  [{elapsed(t)}]")
+    if result_demo:
+        print(f"  Warmup PASSED — algorithm works correctly.")
+    else:
+        print(f"  Warmup FAILED — algorithm may have issues.")
+        return None
+
+    # Now attack RSA-100
+    # Auto-computed bound (~65B) is too large for pure Python.
+    # Use a practical bound — QS needs the factor base to contain primes
+    # that divide Q(x) = (sqrt(n)+x)^2 - n values.
+    bound = 500_000
+    sieve_range = 2_000_000
+    print(f"\n  11b. RSA-100 ({n.bit_length()} bits, {len(str(n))} digits)")
+    print(f"  Bound: {bound:,}, Sieve range: {sieve_range:,}")
+    print(f"  (This may take a while in pure Python...)")
 
     # Standard QS
     t = time.time()
-    qs = QuadraticSieve(demo_n, bound=500, sieve_range=50000)
-    result = qs.factor()
     print(f"\n  Standard QS:")
+    qs = QuadraticSieve(n, bound=bound, sieve_range=sieve_range)
+    result = qs.factor()
     print(f"    Relations found: {qs.stats['smooth_found']}")
-    print(f"    Result: {result}  [{elapsed(t)}]")
+    if result:
+        print(f"    !! FACTORED: {result[0]} × {result[1]}")
+        return result[0]
+    print(f"    No factor  [{elapsed(t)}]")
 
     # Sexagesimal QS
     t = time.time()
-    sqs = SexagesimalQuadraticSieve(demo_n, bound=500, sieve_range=50000)
-    result_s = sqs.factor()
     print(f"\n  Sexagesimal QS:")
+    sqs = SexagesimalQuadraticSieve(n, bound=bound, sieve_range=sieve_range)
+    result_s = sqs.factor()
     print(f"    Relations found: {sqs.stats['smooth_found']}")
     print(f"    Smooth by tier: {sqs.stats['smooth_by_tier']}")
     print(f"    Prefilter saves: {sqs.stats['prefilter_saves']}")
-    print(f"    Result: {result_s}  [{elapsed(t)}]")
+    if result_s:
+        print(f"    !! FACTORED: {result_s[0]} × {result_s[1]}")
+        return result_s[0]
+    print(f"    No factor  [{elapsed(t)}]")
+
+    return None
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -711,46 +770,64 @@ def phase14_random_congruences(n, attempts=100_000):
 # FINAL REPORT
 # ═══════════════════════════════════════════════════════════════════════
 
-def final_report(n, total_time):
+def final_report(n, factor_found, total_time):
     section("FINAL REPORT")
-    print(f"""
-  Target: RSA-2048 ({n.bit_length()} bits, {len(str(n))} digits)
-  Result: NOT FACTORED
+    if factor_found:
+        q = n // factor_found
+        print(f"""
+  Target: RSA-100 ({n.bit_length()} bits, {len(str(n))} digits)
+  Result: FACTORED!
+
+    p = {factor_found}
+    q = {q}
+    p × q = n: {factor_found * q == n}
+
+  Total time: {total_time:.1f}s
+
+  The ancient scribes would be proud:
+    𒁹 𒌋𒌋 𒌋𒐕 — "The number yields to division."
+""")
+    else:
+        print(f"""
+  Target: RSA-100 ({n.bit_length()} bits, {len(str(n))} digits)
+  Result: NOT FACTORED (in this run)
 
   Methods attempted:
     Phase 0:  Reconnaissance               — confirmed composite
     Phase 1:  Sexagesimal analysis          — regularity profiled
     Phase 2:  Trial division (10^6)         — no small factors
     Phase 3:  Pollard p-1                   — p-1, q-1 not smooth
-    Phase 4:  Pollard rho (5M iterations)   — space too large
-    Phase 5:  ECM (standard + Plimpton)     — no small factors
+    Phase 4:  Pollard rho                   — space too large
+    Phase 5:  ECM (standard + Plimpton)     — needs more curves/bounds
     Phase 6:  Continued fractions / Wiener  — d not small
     Phase 7:  RSA structural analysis       — patterns catalogued
     Phase 8:  Reciprocal pair analysis      — no factor leaked
     Phase 9:  Fermat's method               — p, q not close
     Phase 10: Williams p+1                  — p+1, q+1 not smooth
-    Phase 11: Sexagesimal QS (demo)         — works on small n!
+    Phase 11: Sexagesimal QS               — needs larger factor base
     Phase 12: Lattice / LLL analysis        — regularity tested
     Phase 13: GCD bombardment               — no lucky hits
-    Phase 14: Random congruences            — 2^(-1024) odds
+    Phase 14: Random congruences            — low probability
 
   Total time: {total_time:.1f}s
 
-  The RSA-2048 challenge remains unbroken.
-  Prize: $200,000 (expired, but the glory is eternal)
+  RSA-100 was factored in 1991 using the quadratic sieve.
+  Known factors:
+    p = 37975227936943673922808872755445627854565536638199
+    q = 40094690950920881030683735292761468389214899724061
 
-  To factor RSA-2048 you would need approximately:
-    - Trial division:  ~2^512 operations
-    - Pollard rho:     ~2^256 operations
-    - ECM:             ~2^100 operations (if factor existed < 2^200)
-    - GNFS:            ~2^116 operations
-    - Quantum (Shor):  ~4096 logical qubits (not yet available)
+  To factor RSA-100 you would need approximately:
+    - Trial division:  ~2^165 operations
+    - Pollard rho:     ~2^83 operations
+    - ECM:             ~10^7 curves with B1~10^7 (feasible with GMP-ECM)
+    - QS/GNFS:         feasible with optimized C implementation
+    - Pure Python:     too slow for these parameter sizes
 
-  The Babylonian approach is beautiful but cannot overcome the
-  fundamental hardness of the integer factorization problem.
+  Try increasing ECM bounds (B1=10^7, curves=1000) or using
+  a compiled factoring library for production use.
+
   As the ancient scribes might say:
-
-    𒁹 𒌋𒌋 𒌋𒐕 — "The number resists division."
+    𒁹 𒌋𒌋 𒌋𒐕 — "The number resists, but not forever."
 """)
 
 
@@ -760,26 +837,42 @@ def final_report(n, total_time):
 
 def main():
     print(BANNER)
-    n = RSA_2048
+    n = RSA_100
     total_start = time.time()
+    factor = None
 
     phase0_recon(n)
     phase1_sexagesimal(n)
-    phase2_trial_division(n)
-    phase3_pollard_p1(n, B1=100_000, B2=500_000)
-    phase4_pollard_rho(n, iterations=500_000)
-    phase5_ecm(n, curves=10, B1=5_000)
-    phase6_continued_fractions(n)
-    phase7_rsa_structure(n)
-    phase8_reciprocal_pairs(n)
-    phase9_fermat(n, iterations=200_000)
-    phase10_williams_pp1(n, B=100_000)
-    phase11_sexa_qs_demo()
-    phase12_lattice(n)
-    phase13_gcd_bombardment(n)
-    phase14_random_congruences(n, attempts=50_000)
 
-    final_report(n, time.time() - total_start)
+    factor = factor or phase2_trial_division(n)
+    if not factor:
+        factor = phase3_pollard_p1(n, B1=500_000, B2=5_000_000)
+    if not factor:
+        phase4_pollard_rho(n, iterations=2_000_000)
+    if not factor:
+        factor = phase5_ecm(n, curves=200, B1=1_000_000)
+    if not factor:
+        phase6_continued_fractions(n)
+    if not factor:
+        phase7_rsa_structure(n)
+    if not factor:
+        factor = phase8_reciprocal_pairs(n)
+    if not factor:
+        result = phase9_fermat(n, iterations=500_000)
+        if result:
+            factor = result[0] if isinstance(result, tuple) else result
+    if not factor:
+        factor = phase10_williams_pp1(n, B=500_000)
+    if not factor:
+        factor = phase11_sexa_qs(n)
+    if not factor:
+        phase12_lattice(n)
+    if not factor:
+        factor = phase13_gcd_bombardment(n)
+    if not factor:
+        factor = phase14_random_congruences(n, attempts=50_000)
+
+    final_report(n, factor, time.time() - total_start)
 
 
 if __name__ == "__main__":
