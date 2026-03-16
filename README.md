@@ -11,18 +11,26 @@ The library also implements Wildberger's rational trigonometry (quadrance/spread
 ## Install
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
+pip install cuneiform
 ```
 
-For 10-100x faster big-integer arithmetic (recommended for factoring scripts):
+For 10-100x faster big-integer arithmetic (recommended for factoring and number theory):
 
 ```bash
-pip install -e ".[fast]"
+pip install cuneiform[fast]
 ```
 
-This installs [gmpy2](https://gmpy2.readthedocs.io/) which wraps the GMP library. The library works without it, but number theory operations on large integers will be significantly slower. The acceleration is automatic — no code changes needed.
+This adds [gmpy2](https://gmpy2.readthedocs.io/) (GMP wrapper). The library is pure Python and works without it, but number theory operations on large integers will be significantly slower. The acceleration is automatic — no code changes needed.
+
+### Development install
+
+```bash
+git clone https://github.com/Binkmaster/cuneiform.git
+cd cuneiform
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+```
 
 ## Quick start
 

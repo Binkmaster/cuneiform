@@ -6,8 +6,41 @@ build-backend = "setuptools.build_meta"
 name = "cuneiform"
 version = "0.1.0"
 description = "Sexagesimal Rational Mathematics Library"
+readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
+authors = [
+    { name = "Scott Binkley" },
+]
+keywords = [
+    "sexagesimal",
+    "base-60",
+    "rational-arithmetic",
+    "number-theory",
+    "babylonian",
+    "plimpton-322",
+    "rational-trigonometry",
+    "mathematics",
+    "cryptography",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Repository = "https://github.com/Binkmaster/cuneiform"
+
+[project.scripts]
+cuneiform = "cuneiform.__main__:main"
 
 [project.optional-dependencies]
 fast = ["gmpy2>=2.1"]
