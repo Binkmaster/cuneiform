@@ -1,11 +1,10 @@
 """CUNEIFORM CLI — command-line interface.
 
-Phase 7: The minimum viable legacy commands.
-
 Usage:
     python -m cuneiform tabulate [--max-regular N] [--format csv|json]
     python -m cuneiform experiment smooth-density [--bits N] [--trials N] [--seed N]
     python -m cuneiform paper [--bit-sizes 32,48] [--smooth-bits 32] [-o paper.tex]
+    python -m cuneiform random [sexa|int|smooth|dice|d60] [options]
     python -m cuneiform validate
     python -m cuneiform info
 """
@@ -107,6 +106,81 @@ def cmd_paper(args):
             print(latex)
 
 
+def cmd_random(args):
+    """Generate random sexagesimal numbers."""
+    from cuneiform.random import SexaRandom, SmoothRandom, CuneiformDice
+
+    seed = args.seed
+    count = args.count
+    fmt = args.format
+
+    def _format_sexa(s):
+        if fmt == "cuneiform":
+            return s.cuneiform()
+        elif fmt == "decimal":
+            return str(float(s))
+        return str(s)
+
+    sub = args.type
+
+    if sub == "sexa":
+        rng = SexaRandom(seed=seed)
+        for _ in range(count):
+            s = rng.sexa(digits=args.digits)
+            print(_format_sexa(s))
+
+    elif sub == "int":
+        rng = SexaRandom(seed=seed)
+        from cuneiform.core import Sexa
+        for _ in range(count):
+            val = rng.randint(args.lo, args.hi)
+            s = Sexa(val)
+            print(_format_sexa(s))
+
+    elif sub == "smooth":
+        sr = SmoothRandom(seed=seed, max_exp=args.max_exp)
+        for _ in range(count):
+            s = sr.regular()
+            print(_format_sexa(s))
+
+    elif sub == "dice":
+        dice = CuneiformDice(seed=seed)
+        result = dice.roll_total(n=args.n, sides=args.sides)
+        for r in result["rolls"]:
+            if fmt == "cuneiform":
+                print(f"  {r['cuneiform']}  ({r['value']})")
+            else:
+                print(f"  {r['sexa']}")
+        from cuneiform.core import Sexa
+        total = Sexa(result["total"])
+        print(f"Total: {_format_sexa(total)}")
+
+    elif sub == "d60":
+        dice = CuneiformDice(seed=seed)
+        for _ in range(count):
+            r = dice.d60()
+            if fmt == "cuneiform":
+                print(f"{r['cuneiform']}  ({r['value']})")
+            else:
+                print(r["sexa"])
+
+    elif sub == "astragalus":
+        dice = CuneiformDice(seed=seed)
+        for _ in range(count):
+            r = dice.astragalus()
+            if fmt == "cuneiform":
+                print(f"{r['cuneiform']}  ({r['value']})")
+            else:
+                print(r["sexa"])
+
+    else:
+        # Default: generate a sexa value
+        rng = SexaRandom(seed=seed)
+        for _ in range(count):
+            s = rng.sexa(digits=4)
+            print(_format_sexa(s))
+
+
 def cmd_info(args):
     """Show library info."""
     from cuneiform import __version__
@@ -125,6 +199,7 @@ def cmd_info(args):
         ("cas", "RatPoly, RatMatrix, algebraic calculus, Z[1/60]"),
         ("quantum", "Shor simulation, Grover oracle analysis"),
         ("archaeology", "Tablet analyzer, corpus of known tablets"),
+        ("random", "Sexagesimal RNG, smooth random, cuneiform dice"),
         ("experiments", "Smooth density, Plimpton tabulator, benchmarks"),
     ]
     for name, desc in modules:
@@ -181,6 +256,31 @@ def main():
     p_paper.add_argument("-o", "--output", type=str, default=None,
                          help="Write LaTeX to file instead of stdout")
 
+    # random
+    p_rand = subparsers.add_parser("random", help="Generate random sexagesimal numbers")
+    p_rand.add_argument("type", nargs="?", default="sexa",
+                        choices=["sexa", "int", "smooth", "dice", "d60", "astragalus"],
+                        help="Generator type (default: sexa)")
+    p_rand.add_argument("--count", "-c", type=int, default=1,
+                        help="How many values to generate (default: 1)")
+    p_rand.add_argument("--seed", "-s", type=int, default=None,
+                        help="Random seed for reproducibility")
+    p_rand.add_argument("--format", "-f",
+                        choices=["text", "cuneiform", "decimal"], default="text",
+                        help="Output format (default: text)")
+    p_rand.add_argument("--digits", type=int, default=4,
+                        help="Fractional sexagesimal digits for sexa mode (default: 4)")
+    p_rand.add_argument("--lo", type=int, default=1,
+                        help="Lower bound for int mode (default: 1)")
+    p_rand.add_argument("--hi", type=int, default=3600,
+                        help="Upper bound for int mode (default: 3600 = 1,0,0)")
+    p_rand.add_argument("--max-exp", type=int, default=6,
+                        help="Max exponent for smooth mode (default: 6)")
+    p_rand.add_argument("--n", type=int, default=3,
+                        help="Number of dice to roll in dice mode (default: 3)")
+    p_rand.add_argument("--sides", type=int, default=6,
+                        help="Sides per die in dice mode (default: 6)")
+
     # validate
     subparsers.add_parser("validate", help="Run self-validation checks")
 
@@ -195,6 +295,8 @@ def main():
         cmd_experiment(args)
     elif args.command == "paper":
         cmd_paper(args)
+    elif args.command == "random":
+        cmd_random(args)
     elif args.command == "validate":
         cmd_validate(args)
     elif args.command == "info":

@@ -22,6 +22,8 @@ keywords = [
     "rational-trigonometry",
     "mathematics",
     "cryptography",
+    "random",
+    "dice",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
