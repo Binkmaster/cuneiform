@@ -76,6 +76,9 @@ class TabletCorpus:
         self._load_ybc7289()
         self._load_reciprocal_table()
         self._load_multiplication_table()
+        self._load_si427()
+        self._load_im67118()
+        self._load_ybc11120()
 
     def verify_all(self) -> dict[str, dict]:
         """Verify every tablet in the corpus."""
@@ -248,6 +251,131 @@ class TabletCorpus:
                 "multiplication tables for all regular numbers."
             ),
             references=[
+                "Robson, 'Mathematics in Ancient Iraq' (2008)",
+            ],
+        ))
+
+    def _load_si427(self):
+        """Si.427 — Old Babylonian applied geometry (field survey).
+
+        Sippar, c. 1900-1600 BCE. Identified by Mansfield (2021) as the
+        oldest known example of applied geometry: a surveyor's cadastral
+        tablet that lays out perpendicular field boundaries using Pythagorean
+        ("diagonal") triples. Three triples underlie its perpendicular
+        constructions: (3, 4, 5), (8, 15, 17), (5, 12, 13).
+
+        Columns: short side, long side, diagonal — so each row is a right
+        triangle satisfying a² + b² = c².
+        """
+        triples = [(3, 4, 5), (8, 15, 17), (5, 12, 13)]
+        data = [[Sexa(a), Sexa(b), Sexa(c)] for a, b, c in triples]
+
+        self.add(TabletEntry(
+            name="Si.427",
+            museum_number="Si.427 (Istanbul Archaeological Museums)",
+            provenance="Sippar (modern Abu Habbah), Iraq",
+            period="Old Babylonian (c. 1900-1600 BCE)",
+            description=(
+                "Cadastral (field-survey) tablet laying out perpendicular land "
+                "boundaries with Pythagorean triples (3,4,5), (8,15,17), "
+                "(5,12,13). Columns: short side, long side, diagonal."
+            ),
+            data=data,
+            scholarly_interpretation=(
+                "Mansfield (2021): the oldest known example of applied "
+                "geometry. Surveyors used diagonal (Pythagorean) triples with "
+                "regular sexagesimal reciprocals to construct accurate right "
+                "angles for property boundaries, over a millennium before "
+                "Pythagoras."
+            ),
+            references=[
+                "Mansfield, 'Plimpton 322: A Study of Rectangles', "
+                "Foundations of Science 26, 977-1005 (2021)",
+                "Mansfield & Wildberger, 'Perpendicular Lines and Diagonal "
+                "Triples in Old Babylonian Surveying', JCS 72 (2020)",
+            ],
+        ))
+
+    def _load_im67118(self):
+        """IM 67118 (Db2-146) — the completing-the-square rectangle problem.
+
+        Tell edh-Dhiba'i (Eshnunna), c. 1770 BCE, Iraq Museum. A worked
+        problem: given a rectangle of area 0;45 (=3/4) and diagonal 1;15
+        (=5/4), find the sides. The scribe solves for width 0;45 (=3/4) and
+        length 1;0 (=1) by completing the square, then verifies with the
+        Pythagorean relation — one of the clearest surviving demonstrations
+        that OB scribes used the "Pythagorean" rule in practice.
+
+        Row: width, length, diagonal (a scaled 3-4-5 triple: 3/4, 1, 5/4).
+        """
+        width = Sexa(Fraction(3, 4))
+        length = Sexa(1)
+        diagonal = Sexa(Fraction(5, 4))
+        data = [[width, length, diagonal]]
+
+        self.add(TabletEntry(
+            name="IM 67118",
+            museum_number="IM 67118 (= Db2-146), Iraq Museum",
+            provenance="Tell edh-Dhiba'i (Eshnunna), near Baghdad, Iraq",
+            period="Old Babylonian (c. 1770 BCE)",
+            description=(
+                "Worked geometry problem: a rectangle with area 0;45 (=3/4) "
+                "and diagonal 1;15 (=5/4). Solved for width 0;45 (=3/4) and "
+                "length 1;0 (=1) — a 3-4-5 right triangle scaled by 1/4. "
+                "Row: width, length, diagonal."
+            ),
+            data=data,
+            scholarly_interpretation=(
+                "Høyrup (2002): the solution is cut-and-paste 'naive geometry' "
+                "(completing the square), closed by an explicit check with the "
+                "Pythagorean relation. Demonstrates OB command of the "
+                "Pythagorean theorem c. 1770 BCE, centuries before Plimpton 322 "
+                "is usually dated."
+            ),
+            references=[
+                "Baqir, 'Tell Dhiba'i: New Mathematical Texts', Sumer 18 (1962)",
+                "Høyrup, 'Lengths, Widths, Surfaces' (2002)",
+            ],
+        ))
+
+    def _load_ybc11120(self):
+        """YBC 11120 — area of a circle from its circumference.
+
+        Yale Babylonian Collection, Old Babylonian. Given circumference
+        1;30 (=3/2), the scribe squares it to 2;15 (=9/4) and multiplies by
+        the standard constant 0;05 (=1/12) to get the area 0;11,15 (=3/16).
+        The constant 1/12 = 1/(4*3) encodes the working value pi = 3.
+
+        Row: circumference, circumference squared, area — so the analyzer
+        sees col1 = col0^2 (squaring) and col2/col1 = 1/12 (constant ratio).
+        Note: this tablet uses pi = 3; the sharper value 3;7,30 (= 25/8)
+        appears on the Susa tablets, and matches ideas/pi.py's historical
+        constant.
+        """
+        circumference = Sexa(Fraction(3, 2))
+        circ_squared = Sexa(Fraction(9, 4))
+        area = Sexa(Fraction(3, 16))
+        data = [[circumference, circ_squared, area]]
+
+        self.add(TabletEntry(
+            name="YBC 11120",
+            museum_number="YBC 11120",
+            provenance="Unknown (southern Iraq)",
+            period="Old Babylonian (c. 1800-1600 BCE)",
+            description=(
+                "Circle area from circumference: C = 1;30 (=3/2), C^2 = 2;15 "
+                "(=9/4), area = 0;05 * C^2 = 0;11,15 (=3/16). The constant "
+                "0;05 = 1/12 implies pi = 3. Row: C, C^2, area."
+            ),
+            data=data,
+            scholarly_interpretation=(
+                "Shows OB scribes extending square/rectangle area methods to "
+                "curved figures by inserting a constant (0;05 = 1/(4*pi) with "
+                "pi = 3). The refined pi = 3;7,30 of the Susa tablets shows they "
+                "knew 3 was only an approximation."
+            ),
+            references=[
+                "Neugebauer & Sachs, 'Mathematical Cuneiform Texts' (1945)",
                 "Robson, 'Mathematics in Ancient Iraq' (2008)",
             ],
         ))

@@ -889,3 +889,53 @@ class TestTabletCorpus:
         recip = corpus.get("Standard Reciprocal Table")
         result = recip.verify()
         assert result["classified_type"] == "reciprocal_table"
+
+    def test_si427_exists_and_is_pythagorean(self):
+        corpus = TabletCorpus()
+        corpus.load_known_tablets()
+        si = corpus.get("Si.427")
+        assert si is not None
+        result = si.verify()
+        assert result["verified"]
+        types = {r["type"] for r in result["relationships"]}
+        assert "pythagorean" in types
+        # Every row must be an exact Pythagorean triple.
+        for a, b, c in [(3, 4, 5), (8, 15, 17), (5, 12, 13)]:
+            assert a * a + b * b == c * c
+        assert [[int(v.as_fraction) for v in row] for row in si.data] == [
+            [3, 4, 5], [8, 15, 17], [5, 12, 13]]
+
+    def test_im67118_exists_and_matches_diagonal(self):
+        corpus = TabletCorpus()
+        corpus.load_known_tablets()
+        im = corpus.get("IM 67118")
+        assert im is not None
+        result = im.verify()
+        assert result["verified"]
+        types = {r["type"] for r in result["relationships"]}
+        assert "pythagorean" in types
+        # width^2 + length^2 == diagonal^2, and area == width * length.
+        width, length, diagonal = (v.as_fraction for v in im.data[0])
+        assert width ** 2 + length ** 2 == diagonal ** 2
+        assert width == Fraction(3, 4)
+        assert diagonal == Fraction(5, 4)
+        assert width * length == Fraction(3, 4)  # stated area 0;45
+
+    def test_ybc11120_circle_area(self):
+        corpus = TabletCorpus()
+        corpus.load_known_tablets()
+        ybc = corpus.get("YBC 11120")
+        assert ybc is not None
+        assert ybc.verify()["verified"]
+        circ, circ_sq, area = (v.as_fraction for v in ybc.data[0])
+        assert circ == Fraction(3, 2)
+        assert circ_sq == circ ** 2          # 2;15 = 9/4
+        assert area == circ_sq * Fraction(1, 12)  # 0;05 * C^2 = 3/16
+        assert area == Fraction(3, 16)
+
+    def test_new_tablets_all_verify(self):
+        corpus = TabletCorpus()
+        corpus.load_known_tablets()
+        results = corpus.verify_all()
+        for name in ["Si.427", "IM 67118", "YBC 11120"]:
+            assert results[name]["verified"], name
