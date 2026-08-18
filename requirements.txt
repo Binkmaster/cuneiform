@@ -1,2 +1,2 @@
--e git+ssh://git@github.com/Binkmaster/cuneiform.git@19e31a6406aea6937745236d67a58e7e448bc15b#egg=cuneiform
+-e git+ssh://git@github.com/Binkmaster/cuneiform.git@fda581a0045a1928692d52ed0f910f704291d640#egg=cuneiform
 gmpy2==2.3.0

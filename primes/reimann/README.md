@@ -51,6 +51,43 @@ asking: how does n relate to the first three Euler factors (p = 2, 3, 5)?
    - Regularity-graded operator toy model (Hilbert-Polya direction)
    - Mertens function analysis (M(x) = O(x^(1/2+eps)) iff RH)
 
+7. **Critical-line proportion bounds** (`critical_line.py`)
+   - The 1914-2026 history of lower bounds on the proportion of zeros
+     on the critical line, as exact rationals
+   - Every quantified record (1/3, 2/5, 5/12, 269/400) is a *regular*
+     sexagesimal — its base-60 expansion terminates
+   - Exact computation of each jump and of the gap remaining to RH
+
+## State of the art (August 2026)
+
+On August 10, 2026, Anthropic announced that a research version of Claude
+improved the unconditional lower bound on the proportion of nontrivial
+zeta zeros lying on the critical line from 5/12 (~41.67%) to **at least
+67.25%** — the largest single jump in the bound's history:
+
+| Year | Record                              | Bound   | Base 60   |
+|------|-------------------------------------|---------|-----------|
+| 1914 | Hardy                               | infinitely many | — |
+| 1942 | Selberg                             | positive proportion | — |
+| 1974 | Levinson                            | 1/3     | `0;20`    |
+| 1989 | Conrey                              | 2/5     | `0;24`    |
+| 2020 | Pratt-Robles-Zaharescu-Zeindler     | 5/12    | `0;25`    |
+| 2026 | Claude (Anthropic)                  | 269/400 | `0;40,21` |
+
+The method combined Baluyot-Goldston-Suriajaya-Turnage-Butterbaugh's
+unconditional adaptation of Montgomery's pair correlation with Bombieri's
+2000 work on a suitable function space with a quadratic form. The proof
+was reviewed by Brian Conrey and Dan Goldston and formalized in Lean 4;
+independent community review is ongoing.
+
+**This does not change the honest disclaimer above.** A lower bound on
+the proportion of zeros on the line — even a dramatically better one —
+is not RH, and Anthropic itself does not expect these techniques to
+prove RH. It does show that progress on the bound is not frozen, and it
+hands CUNEIFORM a gift: 269/400 has denominator 2^4 * 5^2, so the new
+record — like every record before it — is exactly expressible on a
+Babylonian tablet. See `critical_line.py`.
+
 ## Observations
 
 ### What CUNEIFORM genuinely contributes
@@ -76,7 +113,9 @@ asking: how does n relate to the first three Euler factors (p = 2, 3, 5)?
   primes > 5 and their collective interactions.
 - A proof would require new mathematics (spectral interpretation, positivity
   theorem, trace formula breakthrough, etc.), not better computation.
-- No existing mathematical framework has achieved this in 166 years.
+- No existing mathematical framework has achieved this in 167 years — though
+  the 2026 critical-line bound (see above) shows the partial results are
+  still moving.
 
 ### The honest take
 
@@ -95,4 +134,10 @@ python -m primes.reimann.explicit_formula
 python -m primes.reimann.smooth_zeta
 python -m primes.reimann.zero_verify
 python -m primes.reimann.sexa_zeta
+python -m primes.reimann.spectral_exploration
+python -m primes.reimann.critical_line
 ```
+
+## Sources for the 2026 result
+
+- [Anthropic: Learning more about Claude's mathematical capabilities](https://www.anthropic.com/research/riemann-zeta)
