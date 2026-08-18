@@ -79,6 +79,7 @@ class TabletCorpus:
         self._load_si427()
         self._load_im67118()
         self._load_ybc11120()
+        self._load_tms3_susa()
 
     def verify_all(self) -> dict[str, dict]:
         """Verify every tablet in the corpus."""
@@ -377,6 +378,52 @@ class TabletCorpus:
             references=[
                 "Neugebauer & Sachs, 'Mathematical Cuneiform Texts' (1945)",
                 "Robson, 'Mathematics in Ancient Iraq' (2008)",
+            ],
+        ))
+
+    def _load_tms3_susa(self):
+        """TMS 3 (Susa) — the sharper Babylonian value of pi, 3;7,30 = 25/8.
+
+        Susa (Elam), Old Babylonian. Published by Bruins & Rutten in 'Textes
+        Mathematiques de Suse' (1961). Line 30 lists the coefficient 0;57,36
+        (= 24/25), 'the constant of the circle': the ratio of the perimeter of
+        a regular hexagon to the circumference of its circumscribed circle.
+        Since that ratio is 3/pi, the coefficient encodes pi = 3 / (0;57,36) =
+        25/8 = 3;7,30 -- markedly better than the usual working value pi = 3
+        and the sharpest pi attested in Babylonian mathematics.
+
+        Row: hexagon perimeter, circle circumference, ratio coefficient
+        (6, 6;15 = 25/4, 0;57,36 = 24/25), with perimeter/circumference giving
+        the coefficient exactly.
+        """
+        hexagon_perimeter = Sexa(6)
+        circle_circumference = Sexa(Fraction(25, 4))   # 6;15, using pi = 25/8
+        ratio = Sexa(Fraction(24, 25))                 # 0;57,36
+        data = [[hexagon_perimeter, circle_circumference, ratio]]
+
+        self.add(TabletEntry(
+            name="TMS 3 (Susa)",
+            museum_number="TMS 3 (Susa mathematical texts)",
+            provenance="Susa (modern Shush), Iran (ancient Elam)",
+            period="Old Babylonian (c. 1900-1600 BCE)",
+            description=(
+                "Table of geometric coefficients. Line 30 gives 0;57,36 "
+                "(=24/25), the ratio of a regular hexagon's perimeter to its "
+                "circumscribed circle's circumference. As that ratio is 3/pi, "
+                "it implies pi = 3;7,30 (=25/8). Row: hexagon perimeter, "
+                "circle circumference, ratio."
+            ),
+            data=data,
+            scholarly_interpretation=(
+                "Bruins & Rutten (1961): the coefficient 0;57,36 is 'la "
+                "constante du cercle'. It yields pi = 25/8 = 3.125, the "
+                "sharpest value of pi attested in Babylonian mathematics and "
+                "the historical constant used in ideas/pi.py -- evidence that "
+                "OB scribes knew pi = 3 was only a convenient approximation."
+            ),
+            references=[
+                "Bruins & Rutten, 'Textes Mathematiques de Suse', MDP 34 (1961)",
+                "Robson, 'Mesopotamian Mathematics 2100-1600 BC' (1999)",
             ],
         ))
 

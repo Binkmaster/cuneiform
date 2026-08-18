@@ -933,9 +933,23 @@ class TestTabletCorpus:
         assert area == circ_sq * Fraction(1, 12)  # 0;05 * C^2 = 3/16
         assert area == Fraction(3, 16)
 
+    def test_tms3_susa_pi(self):
+        corpus = TabletCorpus()
+        corpus.load_known_tablets()
+        tms = corpus.get("TMS 3 (Susa)")
+        assert tms is not None
+        assert tms.verify()["verified"]
+        perimeter, circumference, ratio = (v.as_fraction for v in tms.data[0])
+        # Coefficient 0;57,36 = 24/25, the hexagon:circle ratio = 3/pi.
+        assert ratio == Fraction(24, 25)
+        assert perimeter / circumference == ratio
+        # Therefore pi = 3 / ratio = 25/8 = 3;7,30.
+        assert 3 / ratio == Fraction(25, 8)
+        assert Sexa("3;7,30").as_fraction == Fraction(25, 8)
+
     def test_new_tablets_all_verify(self):
         corpus = TabletCorpus()
         corpus.load_known_tablets()
         results = corpus.verify_all()
-        for name in ["Si.427", "IM 67118", "YBC 11120"]:
+        for name in ["Si.427", "IM 67118", "YBC 11120", "TMS 3 (Susa)"]:
             assert results[name]["verified"], name
